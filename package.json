@@ -1,0 +1,22 @@
+{
+  "name": "lazy-fs-backup",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodejs ./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/coleji/lazy-fs-backup.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/coleji/lazy-fs-backup/issues"
+  },
+  "homepage": "https://github.com/coleji/lazy-fs-backup#readme",
+  "dependencies": {
+    "moment": "^2.15.0"
+  }
+}
