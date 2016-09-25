@@ -10,8 +10,12 @@ function executeCommand(cmd) {
 	})
 }
 
+function quotePath(path) {
+	return '\'' + path.replace(/\'/g, '\'\\\'\'') + '\'';
+}
+
 var verifyPath = function(path) {
-	return executeCommand('cd ' + path);
+	return executeCommand('cd ' + quotePath(path));
 };
 
 var getDirContents = function(path) {
@@ -34,7 +38,7 @@ var absolutifyPath = function(path) {
 };
 
 var getMD5Sum = function(path) {
-	return executeCommand('md5sum ' + path).then(function(output) {
+	return executeCommand('md5sum ' + quotePath(path)).then(function(output) {
 		return Promise.resolve(output.split(' ')[0]);
 	}, function(err) { return Promise.reject(err); });
 };
@@ -45,7 +49,7 @@ var makeDestinationDir = function(dryrunMode) {
 	return function(path) {
 		console.log('making dir ' + path)
 		if (dryrunMode) return Promise.resolve();
-		else return executeCommand('mkdir ' + path);
+		else return executeCommand('mkdir ' + quotePath(path));
 	};
 };
 
@@ -53,7 +57,7 @@ var makeSymLink = function(dryrunMode) {
 	return function(linkPath, filePath) {
 		console.log(filePath + ": creating symlink at " + linkPath)
 		if (dryrunMode) return Promise.resolve();
-		else return executeCommand('ln -s ' + filePath + ' '  + linkPath);
+		else return executeCommand('ln -s ' + quotePath(filePath) + ' '  + quotePath(linkPath));
 	}
 };
 
@@ -61,9 +65,9 @@ var copyFile = function(dryrunMode) {
 	return function(source, destination) {
 		console.log(source + ": copying to " + destination)
 		if (dryrunMode) return Promise.resolve();
-		else return executeCommand('cp ' + destination + ' '  + destination)
+		else return executeCommand('cp ' + quotePath(destination) + ' '  + quotePath(destination))
 		.catch(function(err) {
-			if (null !== /No such file or directory/.exec(err)) return executeCommand('cp ' + source + ' '  + destination);
+			if (null !== /No such file or directory/.exec(err)) return executeCommand('cp ' + quotePath(source) + ' '  + quotePath(destination));
 			else return Promise.reject("Attempted to cp over existing file: " + destination);
 		})
 	}
@@ -72,7 +76,7 @@ var copyFile = function(dryrunMode) {
 var lockDir = function(dryrunMode) {
 	return function(path) {
 		if (dryrunMode) return Promise.resolve();
-		else return executeCommand('chmod 555 ' + path + ' -R');
+		else return executeCommand('chmod 555 ' + quotePath(path) + ' -R');
 	}
 };
 
