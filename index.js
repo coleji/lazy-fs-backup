@@ -46,17 +46,7 @@ new Promise(function(resolve, reject) {
 	})
 }).then(function(dates) {
 	return doBackup(sourcePath, destinationContainer, dates);
-}).then(function() {
-	// TODO: for now always cleanup.  delete me!
-	console.log("about to clean up")
-//	if (canCleanupDestination) return fsOperations.deleteDir(destinationPath)
-}).then(function() {
-	console.log("successfully cleaned up")
 }).catch(function(e) {
 	console.log("Failure: " + e)
 //	if (canCleanupDestination) return fsOperations.deleteDir(destinationPath)
-}).then(function() {
-	console.log("successfully cleaned up")
-}).catch(function(e) {
-	console.log("Failure: " + e)
-});
+})

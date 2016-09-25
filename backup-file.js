@@ -19,13 +19,11 @@ var operateFile = function(sourcePath, recurseSubPath, file, destinationContaine
 		}).then(function(sum) {
 			previousSum = sum;
 			if (sourceSum == previousSum) {
-				console.log(sourceSum + ' == ' + previousSum + ", making symlink")
 				return fsOperations.makeSymLink(
 					[destinationContainer, dates[0], recurseSubPath, file].join('/'),
 					[destinationContainer, dates[1], recurseSubPath, file].join('/')
 				);
 			} else {
-				console.log(sourceSum + ' != ' + previousSum + ", copying file")
 				return fsOperations.copyFile(
 					[sourcePath, recurseSubPath, file].join('/'),
 					[destinationContainer, dates[0], recurseSubPath, file].join('/')

@@ -28,13 +28,6 @@ var getDirContents = function(path) {
 	});
 };
 
-// TODO: we should only be allowed to rm files that we created
-// do not run this anywhere but a test server until this is done
-var deleteDir = function(path) {
-	console.log("about to rm -r " + path)
-	return executeCommand('rm ' + path + ' -r')
-};
-
 var trimPath = function(path) {
 	if (path.substr(path.length - 1) == '/') return path.substr(0, path.length - 1);
 	else return path;
@@ -52,13 +45,17 @@ var getMD5Sum = function(path) {
 };
 
 var makeSymLink = function(linkPath, filePath) {
-	console.log(filePath + ": creating symlink back to " + linkPath)
+	console.log(filePath + ": creating symlink at " + linkPath)
 	return executeCommand('ln -s ' + filePath + ' '  + linkPath);
 }
 
 var copyFile = function(source, destination) {
 	console.log(source + ": copying to " + destination)
-	return executeCommand('cp ' + source + ' '  + destination);
+	return executeCommand('cp ' + destination + ' '  + destination)
+	.catch(function(err) {
+		if (null !== /No such file or directory/.exec(err)) return executeCommand('cp ' + source + ' '  + destination);
+		else return Promise.reject("Attempted to cp over existing file: " + destination);
+	})
 }
 
 var lockDir = function(path) {
@@ -69,7 +66,6 @@ module.exports = {
 	verifyPath : verifyPath,
 	makeDestinationDir : makeDestinationDir,
 	getDirContents : getDirContents,
-	deleteDir : deleteDir,
 	trimPath : trimPath,
 	absolutifyPath : absolutifyPath,
 	getMD5Sum : getMD5Sum,
