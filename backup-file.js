@@ -11,7 +11,7 @@ var operateFile = function(sourcePath, recurseSubPath, file, destinationContaine
 	} else {
 		// compare to previous version
 		var sourceSum, previousSum;
-
+		// TODO: need to account for the case where the thing in dates[1] is a symlink
 		return fsOperations.getMD5Sum([sourcePath, recurseSubPath, file].join('/'))
 		.then(function(sum) {
 			sourceSum = sum;
