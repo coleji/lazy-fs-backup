@@ -14,11 +14,6 @@ var verifyPath = function(path) {
 	return executeCommand('cd ' + path);
 };
 
-var makeDestinationDir = function(path) {
-	console.log('making dir ' + path)
-	return executeCommand('mkdir ' + path)
-};
-
 var getDirContents = function(path) {
 	return new Promise(function(resolve, reject) {
 		fs.readdir(path, function(err, files) {
@@ -44,32 +39,54 @@ var getMD5Sum = function(path) {
 	}, function(err) { return Promise.reject(err); });
 };
 
-var makeSymLink = function(linkPath, filePath) {
-	console.log(filePath + ": creating symlink at " + linkPath)
-	return executeCommand('ln -s ' + filePath + ' '  + linkPath);
-}
+// DRYRUNNABLE FUNCTIONS
 
-var copyFile = function(source, destination) {
-	console.log(source + ": copying to " + destination)
-	return executeCommand('cp ' + destination + ' '  + destination)
-	.catch(function(err) {
-		if (null !== /No such file or directory/.exec(err)) return executeCommand('cp ' + source + ' '  + destination);
-		else return Promise.reject("Attempted to cp over existing file: " + destination);
-	})
-}
+var makeDestinationDir = function(dryrunMode) {
+	return function(path) {
+		console.log('making dir ' + path)
+		if (dryrunMode) return Promise.resolve();
+		else return executeCommand('mkdir ' + path);
+	};
+};
 
-var lockDir = function(path) {
-	return executeCommand('chmod 555 ' + path + ' -R');
-}
+var makeSymLink = function(dryrunMode) {
+	return function(linkPath, filePath) {
+		console.log(filePath + ": creating symlink at " + linkPath)
+		if (dryrunMode) return Promise.resolve();
+		else return executeCommand('ln -s ' + filePath + ' '  + linkPath);
+	}
+};
 
-module.exports = {
-	verifyPath : verifyPath,
-	makeDestinationDir : makeDestinationDir,
-	getDirContents : getDirContents,
-	trimPath : trimPath,
-	absolutifyPath : absolutifyPath,
-	getMD5Sum : getMD5Sum,
-	makeSymLink : makeSymLink,
-	copyFile : copyFile,
-	lockDir : lockDir
+var copyFile = function(dryrunMode) {
+	return function(source, destination) {
+		console.log(source + ": copying to " + destination)
+		if (dryrunMode) return Promise.resolve();
+		else return executeCommand('cp ' + destination + ' '  + destination)
+		.catch(function(err) {
+			if (null !== /No such file or directory/.exec(err)) return executeCommand('cp ' + source + ' '  + destination);
+			else return Promise.reject("Attempted to cp over existing file: " + destination);
+		})
+	}
+};
+
+var lockDir = function(dryrunMode) {
+	return function(path) {
+		if (dryrunMode) return Promise.resolve();
+		else return executeCommand('chmod 555 ' + path + ' -R');
+	}
+};
+
+module.exports = function(dryrunMode) {
+	return {
+		verifyPath : verifyPath,
+		getDirContents : getDirContents,
+		trimPath : trimPath,
+		absolutifyPath : absolutifyPath,
+		getMD5Sum : getMD5Sum,
+
+		makeDestinationDir : makeDestinationDir(dryrunMode),
+		makeSymLink : makeSymLink(dryrunMode),
+		copyFile : copyFile(dryrunMode),
+		lockDir : lockDir(dryrunMode)
+	}
 }

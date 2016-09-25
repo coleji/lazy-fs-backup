@@ -1,4 +1,4 @@
-var fsOperations = require('./fs-operations')
+var fsOperations = require('./fs-operations')(!!process.argv[4])
 
 var operateFile = function(sourcePath, recurseSubPath, file, destinationContainer, dates) {
 	console.log(sourcePath + '/' + recurseSubPath + '/' +  file + ": is a file!  back it up!");

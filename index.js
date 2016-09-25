@@ -1,19 +1,24 @@
 var moment = require('moment')
 
-var fsOperations = require('./fs-operations')
+var dryrunMode = !!process.argv[4]
+var fsOperations = require('./fs-operations')(dryrunMode)
+console.log("Dryrun mode engaged? " + dryrunMode)
+
 var doBackup = require('./backup-operation')
 
 const FILE_NAME_FORMAT = 'YYYY-MM-DD';
 
 var sourcePath = fsOperations.absolutifyPath(fsOperations.trimPath(process.argv[2]));
 var destinationContainer = fsOperations.absolutifyPath(fsOperations.trimPath(process.argv[3]));
+
+
 var today = moment().format(FILE_NAME_FORMAT);
 var destinationPath = destinationContainer + '/' + today;
 
 var canCleanupDestination = false;
 
 new Promise(function(resolve, reject) {
-	if (process.argv.length != 4) {
+	if (process.argv.length < 4) {
 		reject("Call this script with two arguments, source path and backup destination path.");
 	} else resolve();
 }).then(function() {
@@ -41,6 +46,7 @@ new Promise(function(resolve, reject) {
 		}).sort(function(a, b) {
 			return b - a;
 		}).map(function(d){ return d.format(FILE_NAME_FORMAT); });
+		if (dryrunMode) dates.unshift(today)
 		if (dates[0] == today) resolve(dates);
 		else reject('Something\'s up with the directories in destinationContainer...');
 	})

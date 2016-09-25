@@ -1,6 +1,6 @@
 var fs = require('fs');
 
-var fsOperations = require('./fs-operations')
+var fsOperations = require('./fs-operations')(!!process.argv[4])
 var operateFile = require('./backup-file')
 
 function flattenArray(arr) {
