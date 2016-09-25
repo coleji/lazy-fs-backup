@@ -1,11 +1,12 @@
 var moment = require('moment')
 
-var fsOperations = require("./fs-operations")
+var fsOperations = require('./fs-operations')
+var doBackup = require('./backup')
 
 const FILE_NAME_FORMAT = 'YYYY-MM-DD';
 
-var sourcePath = process.argv[2];
-var destinationContainer = process.argv[3];
+var sourcePath = fsOperations.absolutifyPath(fsOperations.trimPath(process.argv[2]));
+var destinationContainer = fsOperations.absolutifyPath(fsOperations.trimPath(process.argv[3]));
 var today = moment().format(FILE_NAME_FORMAT);
 var destinationPath = destinationContainer + '/' + today;
 
@@ -46,7 +47,7 @@ new Promise(function(resolve, reject) {
 		else reject('Something\'s up with the directories in destinationContainer...');
 	})
 }).then(function(dates) {
-	// do the backup!
+	return doBackup(sourcePath, destinationContainer, dates);
 }).catch(function(e) {
 	console.log("Failure: " + e)
 	if (canCleanupDestination) return fsOperations.deleteDir(destinationPath)
