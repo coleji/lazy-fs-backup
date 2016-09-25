@@ -8,40 +8,51 @@ function flattenArray(arr) {
  	}, []);
 };
 
-function backupFile(file, callback) {
-	console.log("***********  " + file + " is a file!  back it up!");
-	callback();
+function backupFile(sourcePath, recurseSubPath, file) {
+	return new Promise(function(resolve, reject) {
+		console.log(sourcePath + '/' + recurseSubPath + '/' +  file + ": is a file!  back it up!");
+		setInterval(resolve, 5000)
+	})
 }
 
 function recurse(sourcePath, recurseSubPath) {
 	return new Promise(function(resolve, reject) {
-		console.log("recursing through source path: " + sourcePath + " subpath: " + recurseSubPath)
-		console.log("about to readdir: " + sourcePath + '/' + recurseSubPath)
+		console.log(sourcePath + '/' + recurseSubPath + " : starting recurse, about to readdir")
 		fs.readdir(sourcePath + '/' + recurseSubPath, function(err, files) {
-			if (err) reject(err);
-			else resolve(files);
+			if (err){
+				console.log(err);
+				reject(err);
+			} else resolve(files);
 		})
 	}).then(function(files) {
 		return Promise.all(files.map(function(file) {
 			return new Promise(function(resolve, reject) {
-				console.log('about to lstat ' + sourcePath + '/' + recurseSubPath + '/' + file)
+				console.log(sourcePath + '/' + recurseSubPath + " : about to lstat " + file)
 				fs.lstat(sourcePath + '/' + recurseSubPath + '/' + file, function(err, stats) {
-					console.log("found a thing: " + file)
-					if (err) reject(err);
-					else {
+					if (err) {
+						console.log(err);
+						reject(err);
+					} else {
 						if (stats.isSymbolicLink()) resolve();
 						else if (stats.isDirectory()) {
-							Promise.all(recurse(sourcePath, recurseSubPath + '/' + file)).then(function(promises){
-								resolve(promises);
+							recurse(sourcePath, recurseSubPath + '/' + file).then(function(subPromise){
+								resolve(subPromise);
 							}, function(err) {
+								console.log(err);
 								reject(err);
-							})
-						} else if (stats.isFile()) backupFile(file, function(err) {
-							if (err) reject(err);
-							else resolve();
-						});
-						else console.log(file + " is nothing i care about")
-						resolve();
+							});
+						} else if (stats.isFile()) {
+							backupFile(sourcePath, recurseSubPath, file).then(function(err) {
+								console.log(sourcePath + '/' + recurseSubPath + '/' + file + " : finished backup")
+								resolve();
+							}, function(err) {
+								console.log(err);
+								reject(err)
+							});
+						} else {
+							console.log("%%%%%%%%%%%%%%%% " + file + " is nothing i care about")
+							resolve();
+						}
 					}
 				});
 			});
@@ -52,7 +63,7 @@ function recurse(sourcePath, recurseSubPath) {
 }
 
 var doBackup = function(sourcePath, destinationContainer, dates) {
-	return Promise.all(flattenArray(recurse(sourcePath, '.')));
+	return recurse(sourcePath, '.');
 };
 
 module.exports = doBackup;
