@@ -1,5 +1,8 @@
 var fs = require('fs');
 
+var fsOperations = require('./fs-operations')
+var operateFile = require('./backup-file')
+
 function flattenArray(arr) {
 	return arr.reduce(function(result, e) {
 		if (e instanceof Array) result.push(flattenArray(e));
@@ -8,14 +11,7 @@ function flattenArray(arr) {
  	}, []);
 };
 
-function backupFile(sourcePath, recurseSubPath, file) {
-	return new Promise(function(resolve, reject) {
-		console.log(sourcePath + '/' + recurseSubPath + '/' +  file + ": is a file!  back it up!");
-		setInterval(resolve, 5000)
-	})
-}
-
-function recurse(sourcePath, recurseSubPath) {
+function recurse(dates, sourcePath, recurseSubPath, destinationContainer) {
 	return new Promise(function(resolve, reject) {
 		console.log(sourcePath + '/' + recurseSubPath + " : starting recurse, about to readdir")
 		fs.readdir(sourcePath + '/' + recurseSubPath, function(err, files) {
@@ -33,20 +29,25 @@ function recurse(sourcePath, recurseSubPath) {
 						console.log(err);
 						reject(err);
 					} else {
-						if (stats.isSymbolicLink()) resolve();
-						else if (stats.isDirectory()) {
-							recurse(sourcePath, recurseSubPath + '/' + file).then(function(subPromise){
-								resolve(subPromise);
+						if (stats.isSymbolicLink()) {
+							console.log(sourcePath + '/' + recurseSubPath + '/' + file + " resolved")
+							resolve();
+						} else if (stats.isDirectory()) {
+							fsOperations.makeDestinationDir([destinationContainer, dates[0], recurseSubPath, file].join('/'))
+							recurse(dates, sourcePath, recurseSubPath + '/' + file, destinationContainer).then(function(){
+								console.log(sourcePath + '/' + recurseSubPath + '/' + file + " resolved")
+								resolve();
 							}, function(err) {
-								console.log(err);
+								console.log('%%%%%%%%%%%%%%%%%%%%' + err);
 								reject(err);
 							});
 						} else if (stats.isFile()) {
-							backupFile(sourcePath, recurseSubPath, file).then(function(err) {
+							operateFile(sourcePath, recurseSubPath, file, destinationContainer, dates).then(function(err) {
 								console.log(sourcePath + '/' + recurseSubPath + '/' + file + " : finished backup")
+								console.log(sourcePath + '/' + recurseSubPath + '/' + file + " resolved")
 								resolve();
 							}, function(err) {
-								console.log(err);
+								console.log("!@!@!@!@" + err);
 								reject(err)
 							});
 						} else {
@@ -57,13 +58,13 @@ function recurse(sourcePath, recurseSubPath) {
 				});
 			});
 		}));
-	}).catch(function(err) {
-		console.log(err)
 	});
 }
 
 var doBackup = function(sourcePath, destinationContainer, dates) {
-	return recurse(sourcePath, '.');
+	return recurse(dates, sourcePath, '.', destinationContainer).then(function() {
+		return fsOperations.lockDir(destinationContainer + '/' + dates[0])
+	});
 };
 
 module.exports = doBackup;

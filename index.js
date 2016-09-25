@@ -1,7 +1,7 @@
 var moment = require('moment')
 
 var fsOperations = require('./fs-operations')
-var doBackup = require('./backup')
+var doBackup = require('./backup-operation')
 
 const FILE_NAME_FORMAT = 'YYYY-MM-DD';
 
@@ -27,14 +27,12 @@ new Promise(function(resolve, reject) {
 	// so if we crash after this point we can safely clean it up
 	canCleanupDestination = true;
 
-	console.log('getting contents')
 	// get a list of all the backups that have been done
 	return fsOperations.getDirContents(destinationContainer)
 }).then(function(files) {
 	// Confirm that all the directories in destinationContainer are valid dates
 	return new Promise(function(resolve, reject) {
 		var dates = files.map(function(f) {
-			console.log('about to test ' + f)
 			if (moment(f).isValid()) return moment(f);
 			else {
 				reject("bad date: " + f);
@@ -42,8 +40,8 @@ new Promise(function(resolve, reject) {
 			}
 		}).sort(function(a, b) {
 			return b - a;
-		});
-		if (dates[0].format(FILE_NAME_FORMAT) == today) resolve(dates);
+		}).map(function(d){ return d.format(FILE_NAME_FORMAT); });
+		if (dates[0] == today) resolve(dates);
 		else reject('Something\'s up with the directories in destinationContainer...');
 	})
 }).then(function(dates) {
@@ -51,12 +49,12 @@ new Promise(function(resolve, reject) {
 }).then(function() {
 	// TODO: for now always cleanup.  delete me!
 	console.log("about to clean up")
-	if (canCleanupDestination) return fsOperations.deleteDir(destinationPath)
+//	if (canCleanupDestination) return fsOperations.deleteDir(destinationPath)
 }).then(function() {
 	console.log("successfully cleaned up")
 }).catch(function(e) {
 	console.log("Failure: " + e)
-	if (canCleanupDestination) return fsOperations.deleteDir(destinationPath)
+//	if (canCleanupDestination) return fsOperations.deleteDir(destinationPath)
 }).then(function() {
 	console.log("successfully cleaned up")
 }).catch(function(e) {
