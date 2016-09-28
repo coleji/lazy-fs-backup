@@ -52,6 +52,8 @@ new Promise(function(resolve, reject) {
 	})
 }).then(function(dates) {
 	return doBackup(sourcePath, destinationContainer, dates);
+}).then(function() {
+	console.log("Backup success!");
 }).catch(function(e) {
 	console.log("Failure: " + e)
 //	if (canCleanupDestination) return fsOperations.deleteDir(destinationPath)
